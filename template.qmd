@@ -1,0 +1,329 @@
+---
+date-format: "YYYY-MM-DD hh:mm:ss a z"
+date: now
+published-title: "Report Created"
+params:
+  # A value that can be `S7::convert`'ed into a `val.meter::pkg`
+  # 
+  # Common inputs include:
+  #
+  #   - DESCRIPTION (or PACKAGES) file string
+  #   - PACKAGES file string
+  #   - a package name (to be sourced from a repository)
+  #   - a list of package metadata and metrics
+  #   - an Rds file generated from a val.meter::pkg object
+  #
+  package: NULL
+  
+  # Additional options to set during evaluation.
+  #
+  # These may be especially useful if the report is used for performing package
+  # evaluations, in which case you may consider passing `?val.meter::options` to
+  # enable addition evaluation permissions.
+  #
+  # To set options using R code, pass a string prefixed with "!expr".
+  #
+  options: NULL
+  
+  # Session info to attach to the report
+  #
+  # When empty, defaults to `val.report::session()` captured during report
+  # generation. If you wish to provide information captured from previous
+  # execution, provide `val.report::session()` from that session as a parameter.
+  #
+  session: NULL
+  
+  image: "rocker/rver"
+  hide_reverse_deps: true
+format:
+  r-val-hub-report-html: default
+  r-val-hub-report-gfm: default
+  r-val-hub-report-typst: default
+---
+
+```{r setup, include = FALSE}
+options(
+  width = 80L, 
+  covr.record_tests = TRUE,
+  crayon.enabled = TRUE,
+  cli.ansi = TRUE,
+  # if calculated in report, keep logs
+  val.meter.logs = TRUE
+)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  eval = TRUE,
+  error = TRUE,
+  cache = FALSE
+)
+
+library(S7)
+library(tools)
+library(knitr)
+library(val.meter)
+library(val.report)
+
+header <- val.report::knitr_mutable_header()
+log <- val.report::knitr_logger()
+```
+
+```{r loading, include = FALSE}
+if (is.null(params$package)) {
+  stop(
+    "The `package` parameter is required. At a minimum pass a package ",
+    "name, which will be discovered from installed packages or sourced from a ",
+    "repository. For details, see `?val.report::report()`."
+  )
+}
+
+# parse options, handling expression strings
+opts <- val.report::knitr_update_options(params$options)
+log("parsed `params$options` as:\n", opts, "\n\n")
+
+# parse provided parameter session info or default to current session
+session <- params$session %||% val.report::session()
+log(
+  "using ", if (is.null(params$session)) "current" else "param", 
+  " session captured at: ", format(as.POSIXct(session$time)), "\n\n"
+)
+
+# derive a package object from parameter value
+pkg <- convert(params$package, val.meter::pkg)
+log("parsed `params$package` into val.meter::pkg from:\n", pkg@resource, "\n\n")
+
+# calculate package metrics
+met <- metrics(pkg)
+log("evaluated metrics:\n", met, "\n\n")
+
+header$title <- paste0(pkg$name, " (v", pkg$version, ")")
+```
+
+# Methodology
+
+The following metrics are derived from the `val.meter` R package. `val.meter`
+is built by the [R Validation Hub](https://www.pharmar.org), a
+cross-industry working group operating under the
+[R Consortium](https://www.r-consortium.org), and is designed to consistently
+and reproducibly evaluate packages.
+
+# Results
+
+## Standard Checks
+
+::: {.grid}
+```{r, include = FALSE}
+metric <- pkg_data_info("r_cmd_check_error_count")
+value <- pkg$r_cmd_check_error_count
+classes <- if (value > 0) "card-danger" else "card-success"
+```
+
+{{<
+  metric-card
+  class='g-col-4 `r classes`'
+  title=Errors
+  footer='`r capture.output(tools::Rd2HTML(metric@description, fragment = TRUE))`'
+  text='`r pkg$r_cmd_check_error_count`'
+>}}
+
+```{r, include = FALSE}
+value <- length(pkg$r_cmd_check$warnings)
+classes <- if (value > 0) "card-warning" else "card-success"
+```
+
+{{<
+  metric-card
+  class='g-col-4 `r classes`'
+  title=Warnings
+  footer='number of warnings produced by <code>R CMD check</code>'
+  text='`r value`'
+>}}
+
+```{r, include = FALSE}
+value <- length(pkg$r_cmd_check$notes)
+classes <- if (value > 0) "card-warning" else "card-success"
+```
+
+{{<
+  metric-card
+  class='g-col-4 `r classes`'
+  title=Notes
+  footer='number of notes produced by <code>R CMD check</code>'
+  text='`r value`'
+>}}
+:::
+
+
+::: {.callout appearance="minimal" collapse="true" title="<code>R CMD check</code> logs"}
+```{r rcmd_check_logs_setup, include=FALSE}
+library(rcmdcheck)
+has_results <- !is.null(pkg$r_cmd_check) && !inherits(pkg$r_cmd_check, "error")
+has_logs <- !is.null(pkg@logs$r_cmd_check)
+```
+```{r r_cmd_check_exec_logs, include=has_logs}
+library(rcmdcheck)
+format(pkg@logs$r_cmd_check)
+```
+```{r r_cmd_check_results_logs, include=has_results}
+val.meter::format_output(pkg$r_cmd_check)
+```
+:::
+
+## Good Practices
+
+::: {.grid}
+```{r, include = FALSE}
+metric <- pkg_data_info("test_line_coverage_fraction")
+value <- pkg$test_line_coverage_fraction
+classes <- if (value > 0.6) "card-success" else if (value > 0.2) "card-warning" else "card-danger"
+```
+
+{{<
+  metric-card
+  class='g-col-4 `r classes`'
+  title='Code Coverage'
+  footer='`r metric@description`'
+  text='`r sprintf("%.1f%%", value * 100)`'
+>}}
+
+{{<
+  metric-card
+  class='g-col-4'
+  title='Documentation Coverage'
+  footer='percentage of exported package objects that have corresponding documentation'
+  text='TODO'
+>}}
+
+{{<
+  metric-card
+  class='g-col-4'
+  title='Public Website'
+  footer='whether the package lists a website associated with the project'
+  text='TODO'
+>}}
+
+{{<
+  metric-card
+  class='g-col-4'
+  title='Public Bug Reports'
+  footer='whether the package provides a pathway for submitting bug reports'
+  text='TODO'
+>}}
+:::
+
+::: {.callout appearance="minimal" collapse="true" title="<code>covr::package_coverage()</code> summary"}
+```{r covr_coverage_summary}
+library(covr)
+val.meter::format_output(pkg$covr_coverage)
+```
+:::
+
+## Adoption
+
+# Evaluation Environment
+
+## System Information
+
+```{r execution_info}
+#| tab.cap: "System characteristics measured when evaluating the package"
+
+tt_sys_info_df <- data.frame(
+  Field = c("OS", "Platform", "System", "R Version", "Execution Time"),
+  Value = c(
+    session$session_info$running,
+    session$r_version$platform,
+    session$r_version$system,
+    session$r_version$version.string,
+    format(as.POSIXct(session$time), tz = "UTC", usetz = TRUE)
+  )
+)
+
+knitr::kable(tt_sys_info_df)
+```
+
+::: {.callout appearance="minimal" collapse="true" title="Comprehensive R Session Information"}
+## Generic Session Information
+
+```{.r}
+sessionInfo()
+```
+```{r}
+session$session_info
+```
+
+## Platform Details
+
+```{.r}
+.Platform
+```
+```{r}
+unlist(session$platform)
+```
+
+## System Capabilities
+
+```{.r}
+capabilities()
+```
+```{r}
+unlist(session$capabilities)
+```
+
+## Relevant External Software Installed
+
+```{.r}
+extSoftVersion()
+```
+```{r}
+unlist(session$external_software)
+```
+
+## Relevant Graphics Software Installed
+
+```{.r}
+grSoftVersion()
+```
+```{r}
+unlist(session$graphics_software)
+```
+
+## Machine Details
+
+```{.r}
+.Machine
+```
+```{r}
+unlist(session$machine)
+```
+
+## Random Number Generator Capabilities
+
+```{.r}
+RNGkind()
+```
+```{r}
+session$rng_kind
+```
+
+## Environment Variables Set During Evaluation
+
+Environment variables and R options affect how package checks and software in it
+might behave.
+
+```{r environment_variables}
+val.report::environ_report(
+  exclude = c(
+    "APPDATA", "GITHUB", "GITHUB_PAT", "GITHUB_PAT_GITHUB_COM", 
+    "GITLAB", "GITLAB_PAT", "ProgramFiles", "ProgramFiles(x86)", 
+    "R_DptShare", "R_USER", "USERDNSDOMAIN", "USERDOMAIN",
+    "USERDOMAIN_ROAMINGPROFILE", "USERNAME", "USERPROFILE"
+  )
+)
+```
+
+## Options Set During Evaluation
+
+```{r options}
+val.report::options_report(exclude = c("usethis.full_name", "usethis.description", "usethis.destdir"))
+```
+:::

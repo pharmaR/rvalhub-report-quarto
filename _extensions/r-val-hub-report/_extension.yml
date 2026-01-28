@@ -1,0 +1,42 @@
+title: r-val-hub
+
+author: R Validation Hub
+version: 1.0.0
+quarto-required: ">=1.6.0"
+contributes:
+  metadata:
+    project:
+      brand: _brand.yml
+
+  shortcodes:
+    - shortcodes/metric-card.lua
+
+  formats:
+    html:
+      toc: true
+      toc-title: "[{{< brand logo my-logo light >}}]{.light-content}[{{< brand logo my-logo dark >}}]{.dark-content}"
+      embed-resources: true
+      favicon: html/assets/favicon.svg
+      format-resources:
+        - html/assets/
+        - _brand.yml
+      include-in-header:
+        - html/assets/favicon.html
+      include-before-body:
+        - html/assets/logo.html
+      theme: 
+        dark:
+          - darkly
+          - html/assets/custom.scss
+          - brand
+        light:
+          - default
+          - html/assets/custom.scss
+          - html/assets/custom_light.scss
+          - brand
+
+    typst:
+      template-partials:
+        - assets/typst/typst-template.typ
+        - assets/typst/typst-show.typ
+

@@ -1,8 +1,11 @@
 # R Validation Hub Report Quarto Extension
 
+Quarto-powered tools for generating R package validation assessments and
+reports.
+
 ## Quick Start
 
-### Calculate & Render {.metrics-render-time}
+### Calculate & Render <a name="metrics-render-time"></a>
 
 > [!WARNING]
 > Work-in-progress
@@ -33,15 +36,10 @@ quarto render \
   -P options='val.meter.policy: "!expr val.meter::policy(permissions = TRUE)"'
 ```
 
-_or using the `quarto` R package_
+> [!TIP]
+> Rendering using `val.report` coming soon.
 
-```r
-quarto::quarto_render(
-    
-)
-```
-
-### Precalculated Metrics {.metrics-precalculated}
+### Precalculated Metrics <a name="metrics-precalculated"></a>
 
 By precalculating metrics, we can derive all the inputs for our report outside
 the actual reporting engine. This can make it far easier to control the

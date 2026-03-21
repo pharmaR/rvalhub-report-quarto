@@ -1,4 +1,19 @@
 color:
-  background:
-    light: red
-    dark: green
+  primary:
+    light: "#4d8dc9"
+    dark: "#2a424e"
+
+logo:
+  images:
+    favicon: 
+      path: shared/assets/favicon.svg
+      alt: "R Validation Hub Condensed Logo"
+    logo: 
+      path: shared/assets/logo.svg
+      alt: "R Validation Hub Logo"
+    cover-page-background: 
+      path: shared/assets/cover-background.jpg
+      alt: "R Validation Hub cover page background"
+  small: favicon
+  medium: logo
+  large: cover-page-background

@@ -1,0 +1,6 @@
+/.quarto/
+
+# ignore any Rds files used for testing
+*.Rds
+
+**/*.quarto_ipynb

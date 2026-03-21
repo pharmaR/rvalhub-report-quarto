@@ -1,0 +1,65 @@
+/*-- scss:rules --*/
+.brand-header {
+    padding-bottom: 2em;
+    .brand-logo-img {
+        width: 60%;
+    }
+}
+
+.card {
+    background: $primary;
+
+    p code, code {
+        background: rgba($code-bg, 0.25);
+    }
+
+    &.card-danger {
+        @extend .bg-danger;
+        .card-icon::before {
+            content: "\F623";
+            font-family: "Bootstrap-icons";
+        }
+    }
+
+    &.card-warning {
+        @extend .bg-warning;
+        .card-icon::before {
+            content: "\F335";
+            font-family: "Bootstrap-icons";
+        }
+    }
+
+    &.card-success {
+        @extend .bg-success;
+        .card-icon::before {
+            content: "\F26B";
+            font-family: "Bootstrap-icons";
+        }
+    }
+
+    .card-icon {
+        @extend .pe-none;
+        position: absolute;
+        opacity: 15%;
+        left: 80%;
+        top: 50%;
+        transform: translate(-50%, -50%) scale(1000%);
+    }
+    
+    .card-title {
+        color: unset;
+    }
+
+    .card-text {
+        color: unset;
+    }
+
+    // avoid extra padding from tools::Rd2HTML wrapping fragments in <p>
+    .card-footer p {
+        margin: 0;
+    }
+
+    .card-footer {
+        background: rgba(var(--bs-body-bg-rgb), 0.1);
+    }
+}

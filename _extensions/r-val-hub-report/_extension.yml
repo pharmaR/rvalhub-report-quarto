@@ -8,35 +8,53 @@ contributes:
     project:
       brand: _brand.yml
 
+  filters:
+    - typst-grid.lua
+
   shortcodes:
     - shortcodes/metric-card.lua
 
   formats:
     html:
       toc: true
-      toc-title: "[{{< brand logo my-logo light >}}]{.light-content}[{{< brand logo my-logo dark >}}]{.dark-content}"
       embed-resources: true
       favicon: html/assets/favicon.svg
       format-resources:
-        - html/assets/
+        - shared/assets
         - _brand.yml
       include-in-header:
-        - html/assets/favicon.html
+        - text: |
+            <link rel="icon" type="image/svg" href="{{< brand logo small >}}">
       include-before-body:
-        - html/assets/logo.html
-      theme: 
-        dark:
+        - text: |
+            <div class="brand-header">
+              <img class="brand-logo-img" src="{{< brand logo medium >}}" alt="R Validation Hub Logo"/>
+            </div>
+      theme:
+        # NOTE:
+        # Variables (scss:defaults) are applied in _reverse_ order, whereas all
+        # other scss directives are applied in sequential order. In order to use
+        # brand variables to derive other variables, we must specify variables
+        # _first_.
+        #
+        # https://quarto.org/docs/output-formats/html-themes-more.html#bootstrap-bootswatch-layering
+        # 
+        dark: 
+          - html/assets/custom-variables.scss
           - darkly
-          - html/assets/custom.scss
           - brand
+          - html/assets/custom-rules.scss
         light:
-          - default
-          - html/assets/custom.scss
-          - html/assets/custom_light.scss
+          - html/assets/custom-variables-light.scss
+          - html/assets/custom-variables.scss
+          - flatly
           - brand
+          - html/assets/custom-rules.scss
 
     typst:
+      template: typst/template.typ
       template-partials:
-        - assets/typst/typst-template.typ
-        - assets/typst/typst-show.typ
+        - typst/brand.typ
+        - typst/typst-template.typ
+        - typst/typst-show.typ
 

@@ -1,5 +1,5 @@
 ---
-date-format: "YYYY-MM-DD hh:mm:ss a z"
+date-format: "YYYY-MM-DD hh:mm:ssa z"
 date: now
 published-title: "Report Created"
 params:
@@ -35,10 +35,11 @@ params:
   
   image: "rocker/rver"
   hide_reverse_deps: true
+
 format:
   r-val-hub-report-html: default
-  r-val-hub-report-gfm: default
-  r-val-hub-report-typst: default
+  r-val-hub-report-typst:
+    keep-typ: true
 ---
 
 ```{r setup, include = FALSE}
@@ -63,6 +64,15 @@ library(tools)
 library(knitr)
 library(val.meter)
 library(val.report)
+
+format <- knitr::opts_knit$get("rmarkdown.pandoc.to") %||%
+  knitr::opts_knit$get("out.format")
+
+callout <- switch(
+  format,
+  "typst" = "",
+  '.callout appearance="minimal" collapse="true"'
+)
 
 header <- val.report::knitr_mutable_header()
 log <- val.report::knitr_logger()
@@ -96,7 +106,7 @@ log("parsed `params$package` into val.meter::pkg from:\n", pkg@resource, "\n\n")
 met <- metrics(pkg)
 log("evaluated metrics:\n", met, "\n\n")
 
-header$title <- paste0(pkg$name, " (v", pkg$version, ")")
+header$title <- paste0("`", pkg$name, "` v", pkg$version)
 ```
 
 # Methodology
@@ -112,15 +122,18 @@ and reproducibly evaluate packages.
 ## Standard Checks
 
 ::: {.grid}
+{{< typst-grid-start >}}
+
 ```{r, include = FALSE}
 metric <- pkg_data_info("r_cmd_check_error_count")
 value <- pkg$r_cmd_check_error_count
-classes <- if (value > 0) "card-danger" else "card-success"
+style <- if (value > 0) "danger" else "success"
 ```
 
 {{<
   metric-card
-  class='g-col-4 `r classes`'
+  span=4
+  style=`r style`
   title=Errors
   footer='`r capture.output(tools::Rd2HTML(metric@description, fragment = TRUE))`'
   text='`r pkg$r_cmd_check_error_count`'
@@ -128,12 +141,13 @@ classes <- if (value > 0) "card-danger" else "card-success"
 
 ```{r, include = FALSE}
 value <- length(pkg$r_cmd_check$warnings)
-classes <- if (value > 0) "card-warning" else "card-success"
+style <- if (value > 0) "warning" else "success"
 ```
 
 {{<
   metric-card
-  class='g-col-4 `r classes`'
+  span=4
+  style=`r style`
   title=Warnings
   footer='number of warnings produced by <code>R CMD check</code>'
   text='`r value`'
@@ -141,20 +155,22 @@ classes <- if (value > 0) "card-warning" else "card-success"
 
 ```{r, include = FALSE}
 value <- length(pkg$r_cmd_check$notes)
-classes <- if (value > 0) "card-warning" else "card-success"
+style <- if (value > 0) "warning" else "success"
 ```
 
 {{<
   metric-card
-  class='g-col-4 `r classes`'
+  span=4
+  style=`r style`
   title=Notes
   footer='number of notes produced by <code>R CMD check</code>'
   text='`r value`'
 >}}
+
+{{< typst-grid-end >}}
 :::
 
-
-::: {.callout appearance="minimal" collapse="true" title="<code>R CMD check</code> logs"}
+::: {`r callout` title="<code>R CMD check</code> logs"}
 ```{r rcmd_check_logs_setup, include=FALSE}
 library(rcmdcheck)
 has_results <- !is.null(pkg$r_cmd_check) && !inherits(pkg$r_cmd_check, "error")
@@ -162,25 +178,28 @@ has_logs <- !is.null(pkg@logs$r_cmd_check)
 ```
 ```{r r_cmd_check_exec_logs, include=has_logs}
 library(rcmdcheck)
-format(pkg@logs$r_cmd_check)
+pkg@logs$r_cmd_check
 ```
 ```{r r_cmd_check_results_logs, include=has_results}
-val.meter::format_output(pkg$r_cmd_check)
+cat(val.meter::format_output(pkg$r_cmd_check))
 ```
 :::
 
 ## Good Practices
 
 ::: {.grid}
+{{< typst-grid-start >}}
+
 ```{r, include = FALSE}
 metric <- pkg_data_info("test_line_coverage_fraction")
 value <- pkg$test_line_coverage_fraction
-classes <- if (value > 0.6) "card-success" else if (value > 0.2) "card-warning" else "card-danger"
+style <- if (value > 0.6) "success" else if (value > 0.2) "warning" else "danger"
 ```
 
 {{<
   metric-card
-  class='g-col-4 `r classes`'
+  span=4
+  style=`r style`
   title='Code Coverage'
   footer='`r metric@description`'
   text='`r sprintf("%.1f%%", value * 100)`'
@@ -188,7 +207,7 @@ classes <- if (value > 0.6) "card-success" else if (value > 0.2) "card-warning" 
 
 {{<
   metric-card
-  class='g-col-4'
+  span=4
   title='Documentation Coverage'
   footer='percentage of exported package objects that have corresponding documentation'
   text='TODO'
@@ -196,7 +215,7 @@ classes <- if (value > 0.6) "card-success" else if (value > 0.2) "card-warning" 
 
 {{<
   metric-card
-  class='g-col-4'
+  span=4
   title='Public Website'
   footer='whether the package lists a website associated with the project'
   text='TODO'
@@ -204,17 +223,19 @@ classes <- if (value > 0.6) "card-success" else if (value > 0.2) "card-warning" 
 
 {{<
   metric-card
-  class='g-col-4'
+  span=4
   title='Public Bug Reports'
   footer='whether the package provides a pathway for submitting bug reports'
   text='TODO'
 >}}
+
+{{< typst-grid-end >}}
 :::
 
-::: {.callout appearance="minimal" collapse="true" title="<code>covr::package_coverage()</code> summary"}
+::: {`r callout` title="<code>covr::package_coverage()</code> summary"}
 ```{r covr_coverage_summary}
 library(covr)
-val.meter::format_output(pkg$covr_coverage)
+cat(val.meter::format_output(pkg$covr_coverage))
 ```
 :::
 
@@ -241,7 +262,7 @@ tt_sys_info_df <- data.frame(
 knitr::kable(tt_sys_info_df)
 ```
 
-::: {.callout appearance="minimal" collapse="true" title="Comprehensive R Session Information"}
+::: {`r callout` title="Comprehensive R Session Information"}
 ## Generic Session Information
 
 ```{.r}

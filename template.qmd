@@ -29,7 +29,8 @@ params:
   #
   # When empty, defaults to `val.report::session()` captured during report
   # generation. If you wish to provide information captured from previous
-  # execution, provide `val.report::session()` from that session as a parameter.
+  # execution, provide `val.report::session()` from that session as a parameter,
+  # either as an R object or a `.Rds` file path.
   #
   session: NULL
   
@@ -92,7 +93,13 @@ opts <- val.report::knitr_update_options(params$options)
 log("parsed `params$options` as:\n", opts, "\n\n")
 
 # parse provided parameter session info or default to current session
-session <- params$session %||% val.report::session()
+session <- params$session
+log("session `params$session` as:\n", session, "\n\n")
+log(file.exists(session))
+if (is.character(session) && file.exists(session) && endsWith(session, ".Rds")) {
+  session <- readRDS(session)  
+}
+
 log(
   "using ", if (is.null(params$session)) "current" else "param", 
   " session captured at: ", format(as.POSIXct(session$time)), "\n\n"

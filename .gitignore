@@ -1,6 +1,10 @@
 /.quarto/
+**/*.quarto_ipynb
 
 # ignore any Rds files used for testing
 *.Rds
 
-**/*.quarto_ipynb
+# ignore files copied to root when rendering
+_brand.yml
+assets/*
+template.typ

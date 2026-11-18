@@ -1,18 +1,20 @@
 color:
-  primary:
-    light: "#4d8dc9"
-    dark: "#2a424e"
+  # NOTE: per-color light/dark needs Quarto >= 1.8; on 1.7.x use a string.
+  primary: "#4d8dc9"
 
 logo:
+  # Paths are extension-relative so they resolve from the rendered document dir
+  # (inst/report/) whether consumed by the html include, the typst brand-logo
+  # variable, or a `brand` shortcode -- and they always ship with the extension.
   images:
-    favicon: 
-      path: shared/assets/favicon.svg
+    favicon:
+      path: _extensions/r-val-hub-report/shared/assets/favicon.svg
       alt: "R Validation Hub Condensed Logo"
-    logo: 
-      path: shared/assets/logo.svg
+    logo:
+      path: _extensions/r-val-hub-report/shared/assets/logo.svg
       alt: "R Validation Hub Logo"
-    cover-page-background: 
-      path: shared/assets/cover-background.jpg
+    cover-page-background:
+      path: _extensions/r-val-hub-report/shared/assets/cover-background.jpg
       alt: "R Validation Hub cover page background"
   small: favicon
   medium: logo

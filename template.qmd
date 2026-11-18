@@ -132,9 +132,24 @@ and reproducibly evaluate packages.
 {{< typst-grid-start >}}
 
 ```{r, include = FALSE}
+# A metric that could not be derived (e.g. R CMD check or coverage for an
+# installed package, which has no source to run them on) is a condition object
+# rather than a number. Show such cards as a grey "N/A" instead of failing the
+# render. (Always pass a non-empty style: an empty `style=` makes the shortcode
+# swallow the next argument, which breaks the typst output.)
+card_value <- function(x) {
+  ok <- !inherits(x, "error") && is.numeric(x) && length(x) == 1L && !is.na(x)
+  if (ok) x else NA_real_
+}
+card_text <- function(x, fmt = "%s") {
+  if (is.na(x)) "N/A" else sprintf(fmt, x)
+}
+check <- pkg$r_cmd_check
+check_ok <- !is.null(check) && !inherits(check, "error")
+
 metric <- pkg_data_info("r_cmd_check_error_count")
-value <- pkg$r_cmd_check_error_count
-style <- if (value > 0) "danger" else "success"
+value <- card_value(pkg$r_cmd_check_error_count)
+style <- if (is.na(value)) "secondary" else if (value > 0) "danger" else "success"
 ```
 
 {{<
@@ -143,12 +158,12 @@ style <- if (value > 0) "danger" else "success"
   style=`r style`
   title=Errors
   footer='`r capture.output(tools::Rd2HTML(metric@description, fragment = TRUE))`'
-  text='`r pkg$r_cmd_check_error_count`'
+  text='`r card_text(value)`'
 >}}
 
 ```{r, include = FALSE}
-value <- length(pkg$r_cmd_check$warnings)
-style <- if (value > 0) "warning" else "success"
+value <- if (check_ok) length(check$warnings) else NA_real_
+style <- if (is.na(value)) "secondary" else if (value > 0) "warning" else "success"
 ```
 
 {{<
@@ -157,12 +172,12 @@ style <- if (value > 0) "warning" else "success"
   style=`r style`
   title=Warnings
   footer='number of warnings produced by <code>R CMD check</code>'
-  text='`r value`'
+  text='`r card_text(value)`'
 >}}
 
 ```{r, include = FALSE}
-value <- length(pkg$r_cmd_check$notes)
-style <- if (value > 0) "warning" else "success"
+value <- if (check_ok) length(check$notes) else NA_real_
+style <- if (is.na(value)) "secondary" else if (value > 0) "warning" else "success"
 ```
 
 {{<
@@ -171,7 +186,7 @@ style <- if (value > 0) "warning" else "success"
   style=`r style`
   title=Notes
   footer='number of notes produced by <code>R CMD check</code>'
-  text='`r value`'
+  text='`r card_text(value)`'
 >}}
 
 {{< typst-grid-end >}}
@@ -180,14 +195,14 @@ style <- if (value > 0) "warning" else "success"
 ::: {`r callout` title="<code>R CMD check</code> logs"}
 ```{r rcmd_check_logs_setup, include=FALSE}
 library(rcmdcheck)
-has_results <- !is.null(pkg$r_cmd_check) && !inherits(pkg$r_cmd_check, "error")
+has_results <- check_ok
 has_logs <- !is.null(pkg@logs$r_cmd_check)
 ```
-```{r r_cmd_check_exec_logs, include=has_logs}
+```{r r_cmd_check_exec_logs, eval=has_logs, include=has_logs}
 library(rcmdcheck)
 pkg@logs$r_cmd_check
 ```
-```{r r_cmd_check_results_logs, include=has_results}
+```{r r_cmd_check_results_logs, eval=has_results, include=has_results}
 cat(val.meter::format_output(pkg$r_cmd_check))
 ```
 :::
@@ -199,8 +214,16 @@ cat(val.meter::format_output(pkg$r_cmd_check))
 
 ```{r, include = FALSE}
 metric <- pkg_data_info("test_line_coverage_fraction")
-value <- pkg$test_line_coverage_fraction
-style <- if (value > 0.6) "success" else if (value > 0.2) "warning" else "danger"
+value <- card_value(pkg$test_line_coverage_fraction)
+style <- if (is.na(value)) {
+  "secondary"
+} else if (value > 0.6) {
+  "success"
+} else if (value > 0.2) {
+  "warning"
+} else {
+  "danger"
+}
 ```
 
 {{<
@@ -209,7 +232,7 @@ style <- if (value > 0.6) "success" else if (value > 0.2) "warning" else "danger
   style=`r style`
   title='Code Coverage'
   footer='`r metric@description`'
-  text='`r sprintf("%.1f%%", value * 100)`'
+  text='`r card_text(value * 100, "%.1f%%")`'
 >}}
 
 {{<
@@ -242,7 +265,13 @@ style <- if (value > 0.6) "success" else if (value > 0.2) "warning" else "danger
 ::: {`r callout` title="<code>covr::package_coverage()</code> summary"}
 ```{r covr_coverage_summary}
 library(covr)
-cat(val.meter::format_output(pkg$covr_coverage))
+cov <- pkg$covr_coverage
+if (inherits(cov, "error")) {
+  cat("Coverage could not be computed for this package.\n\n")
+  cat(conditionMessage(cov), "\n")
+} else {
+  cat(val.meter::format_output(cov))
+}
 ```
 :::
 

@@ -1,3 +1,19 @@
+// Polyfill: Quarto < 1.8 does not inject a `brand-logo` typst variable from
+// `_brand.yml`, but this template (brand.typ + typst-template.typ) expects one
+// (typst-template.typ reads brand-logo.at("medium"/"large") for the header logo
+// and cover-page background). Define it here from the brand assets shipped with
+// this extension so the cover page/logo render.
+//
+// Paths resolve relative to the compiled template.typ, which Quarto writes into
+// the input document's directory (e.g. inst/report/). We therefore reach the
+// assets via the extension dir, which always travels with the template — so this
+// works from a clean checkout with no asset copying required.
+#let brand-logo = (
+  small: (path: "_extensions/r-val-hub-report/shared/assets/favicon.svg", alt: "R Validation Hub Condensed Logo"),
+  medium: (path: "_extensions/r-val-hub-report/shared/assets/logo.svg", alt: "R Validation Hub Logo"),
+  large: (path: "_extensions/r-val-hub-report/shared/assets/cover-background.jpg", alt: "R Validation Hub cover page background"),
+)
+
 #let brand_bootswatch_defaults = (
   color: (
     primary: rgb("#0d6efd"),

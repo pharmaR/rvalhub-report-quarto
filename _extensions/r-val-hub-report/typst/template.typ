@@ -4,8 +4,6 @@ $for(header-includes)$
 $header-includes$
 $endfor$
 
-$page.typ()$
-
 $for(include-before)$
 $include-before$
 $endfor$

@@ -18,17 +18,22 @@ contributes:
     html:
       toc: true
       embed-resources: true
-      favicon: html/assets/favicon.svg
+      # Reference the brand assets shipped with this extension directly. Paths
+      # resolve relative to the rendered document (inst/report/), and the assets
+      # always travel with the extension, so this works from a clean checkout.
+      # (The `{{< brand logo ... >}}` shortcode is intentionally avoided: brand
+      # `logo` shortcodes need Quarto >= 1.8, and this extension supports 1.6+.)
+      favicon: _extensions/r-val-hub-report/shared/assets/favicon.svg
       format-resources:
-        - shared/assets
+        - _extensions/r-val-hub-report/shared/assets
         - _brand.yml
       include-in-header:
         - text: |
-            <link rel="icon" type="image/svg" href="{{< brand logo small >}}">
+            <link rel="icon" type="image/svg" href="_extensions/r-val-hub-report/shared/assets/favicon.svg">
       include-before-body:
         - text: |
             <div class="brand-header">
-              <img class="brand-logo-img" src="{{< brand logo medium >}}" alt="R Validation Hub Logo"/>
+              <img class="brand-logo-img" src="_extensions/r-val-hub-report/shared/assets/logo.svg" alt="R Validation Hub Logo"/>
             </div>
       theme:
         # NOTE:
